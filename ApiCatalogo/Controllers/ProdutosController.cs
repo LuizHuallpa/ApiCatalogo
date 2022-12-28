@@ -67,8 +67,8 @@ namespace ApiCatalogo.Controllers
         public ActionResult<Produto> Delete(int id)
         {
             var produto = _context.Produtos.FirstOrDefault(p => p.ProdutoId == id);
-           // var produto = _context.Produtos.Find(id);
-            
+            // var produto = _context.Produtos.Find(id);
+
             if (produto is null)
                 return NotFound("Produto não encontrado");
 
