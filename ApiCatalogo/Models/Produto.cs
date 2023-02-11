@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using ApiCatalogo.Validacao;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
@@ -10,12 +11,13 @@ namespace ApiCatalogo.Models
         [Key]
         public int ProdutoId { get; set; }
 
-        [Required(ErrorMessage = "Name is required")]
+        [Required(ErrorMessage = "O nome é obrigatório!")]
         [StringLength(80)]
+        [PrimeiraLetraMaiuscula]
         public string? Nome { get; set; }
 
-        [Required(ErrorMessage = "Name is required")]
-        [StringLength(300)]
+        [Required(ErrorMessage = "Vicê precisa de uma descrição")]
+        [StringLength(300, ErrorMessage = "A descrição deve ter no máximo 300 caracteres")]
         public string?  Descricao { get; set; }
 
         [Required]
