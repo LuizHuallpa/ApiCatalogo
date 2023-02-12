@@ -1,4 +1,5 @@
 ﻿using ApiCatalogo.Context;
+using ApiCatalogo.Filters;
 using ApiCatalogo.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -16,16 +17,14 @@ namespace ApiCatalogo.Controllers
         {
             _context = context;
         }
-        [HttpGet]
-        public ActionResult<IEnumerable<Produto>> Get()
-        {
-            var produtos = _context.Produtos.AsNoTracking().ToList();
-            if (produtos is null)
-            {
-                return NotFound();
-            }
 
-            return produtos;
+
+
+        [HttpGet]
+        [ServiceFilter(typeof(ApiLoggingFilter))]
+        public async Task<ActionResult<IEnumerable<Produto>>> Get()
+        {
+            return await _context.Produtos.AsNoTracking().ToListAsync(); ;
         }
 
         [HttpGet("{id:int:min(1)}", Name = "ObterProduto")]
