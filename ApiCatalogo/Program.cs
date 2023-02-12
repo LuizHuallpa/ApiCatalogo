@@ -1,4 +1,5 @@
 using ApiCatalogo.Context;
+using ApiCatalogo.Extensions;
 using ApiCatalogo.Filters;
 using ApiCatalogo.Services;
 using Microsoft.EntityFrameworkCore;
@@ -24,6 +25,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
                 ServerVersion.AutoDetect(mySqlConnection)));
 
 var app = builder.Build();
+
+app.ConfigureExceptionHandler();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
