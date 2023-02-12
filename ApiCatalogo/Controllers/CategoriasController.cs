@@ -1,7 +1,6 @@
 ﻿using ApiCatalogo.Context;
 using ApiCatalogo.Models;
 using ApiCatalogo.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,17 +11,19 @@ namespace ApiCatalogo.Controllers
     public class CategoriasController : ControllerBase
     {
         private readonly AppDbContext _context;
-         
-        public CategoriasController(AppDbContext context)
+        private readonly ILogger _logger;
+        public CategoriasController(AppDbContext context, ILogger<CategoriasController> logger )
         {
             _context = context;
+            _logger = logger;
         }
 
         [HttpGet("produtos")]
         public ActionResult<IEnumerable<Categoria>> GetCategoriasprodutos()
         {
+            _logger.LogInformation("============ GET api/categorias/produtos ===================");
             //return _context.Categorias.Include(x => x.Produtos).AsNoTracking().ToList();
-            return _context.Categorias.Include(x => x.Produtos).Where(c=> c.CategoriaId <=5 ).AsNoTracking().ToList();
+            return _context.Categorias.Include(x => x.Produtos).Where(c => c.CategoriaId <= 5).AsNoTracking().ToList();
         }
 
         [HttpGet("saudacao/{nome}")]
@@ -45,7 +46,7 @@ namespace ApiCatalogo.Controllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Erro ao tentar obter as categorias do banco de dados");
             }
-            
+
 
         }
 
@@ -74,10 +75,10 @@ namespace ApiCatalogo.Controllers
         {
             if (categoria is null)
                 return BadRequest();
-            
+
             _context.Categorias.Add(categoria);
             _context.SaveChanges();
-            
+
             return new CreatedAtRouteResult("ObterCategoria", new { id = categoria.CategoriaId }, categoria);
         }
         [HttpPut("{id:int}")]
