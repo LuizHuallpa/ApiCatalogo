@@ -7,35 +7,37 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
-namespace ApiCatalogo.Controllers
+
+
+
+namespace APICatalogo.Controllers
 {
-    [Route("[controller]")]
+    [Route("api/[Controller]")]
     [ApiController]
     public class ProdutosController : ControllerBase
     {
-        private readonly IUnityOfWork _uow;
+        private readonly IUnityOfWork _uof;
         private readonly IMapper _mapper;
-
-        public ProdutosController(IUnityOfWork context, IMapper mapper)
+        public ProdutosController(IUnityOfWork contexto, IMapper mapper)
         {
-            _uow = context;
+            _uof = contexto;
             _mapper = mapper;
         }
 
         [HttpGet("menorpreco")]
-        public ActionResult<IEnumerable<ProdutoDTO>> GetProdutosPrecos()
+        public async Task<ActionResult<IEnumerable<ProdutoDTO>>> GetProdutosPrecos()
         {
-            var produtos = _uow.ProdutoRepository.GetProdutosPorPreco().ToList();
+            var produtos = await _uof.ProdutoRepository.GetProdutosPorPreco();
             var produtosDto = _mapper.Map<List<ProdutoDTO>>(produtos);
 
             return produtosDto;
         }
 
+        // api/produtos
         [HttpGet]
-        [ServiceFilter(typeof(ApiLoggingFilter))]
-        public ActionResult<IEnumerable<ProdutoDTO>> Get([FromQuery] ProdutosParameters produtosParameters)
+        public async Task<ActionResult<IEnumerable<ProdutoDTO>>> Get([FromQuery] ProdutosParameters produtosParameters)
         {
-            var produtos = _uow.ProdutoRepository.GetProdutos(produtosParameters);
+            var produtos = await _uof.ProdutoRepository.GetProdutos(produtosParameters);
 
             var metadata = new
             {
@@ -47,70 +49,76 @@ namespace ApiCatalogo.Controllers
                 produtos.HasPrevious
             };
 
-            Response.Headers.Add("X-Pagination",JsonSerializer.Serialize(metadata));
+            Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(metadata));
 
             var produtosDto = _mapper.Map<List<ProdutoDTO>>(produtos);
-
             return produtosDto;
         }
 
-        [HttpGet("{id:int:min(1)}", Name = "ObterProduto")]
-        public ActionResult<ProdutoDTO> Get(int id)
+        // api/produtos/1
+        [HttpGet("{id}", Name = "ObterProduto")]
+        public async Task<ActionResult<ProdutoDTO>> Get(int id)
         {
-            var produto = _uow.ProdutoRepository.GetById(p => p.ProdutoId == id);
-            if (produto is null)
+            var produto = await _uof.ProdutoRepository.GetById(p => p.ProdutoId == id);
+
+            if (produto == null)
             {
-                return NotFound("Produto não encontrado");
+                return NotFound();
             }
-            var produtoDTO = _mapper.Map<ProdutoDTO>(produto);
-            return produtoDTO;
+
+            var produtoDto = _mapper.Map<ProdutoDTO>(produto);
+            return produtoDto;
         }
 
+        //  api/produtos
         [HttpPost]
-        public ActionResult Post(ProdutoDTO produtoDto)
+        public async Task<ActionResult> Post([FromBody] ProdutoDTO produtoDto)
         {
             var produto = _mapper.Map<Produto>(produtoDto);
-            if (produto is null)
-                return BadRequest();
 
-            _uow.ProdutoRepository.Add(produto);
-            _uow.Commit();
+            _uof.ProdutoRepository.Add(produto);
+            await _uof.Commit();
 
             var produtoDTO = _mapper.Map<ProdutoDTO>(produto);
 
-            return new CreatedAtRouteResult("ObterProduto", new { id = produto.ProdutoId }, produtoDTO);
-
+            return new CreatedAtRouteResult("ObterProduto",
+               new { id = produto.ProdutoId }, produtoDTO);
         }
 
-        [HttpPut("{id:int}")]
-        public ActionResult Put(int id, [FromBody] ProdutoDTO produtoDto)
+        // api/produtos/1
+        [HttpPut("{id}")]
+        public async Task<ActionResult> Put(int id, [FromBody] ProdutoDTO produtoDto)
         {
             if (id != produtoDto.ProdutoId)
-                return BadRequest("Produto não encontrado");
+            {
+                return BadRequest();
+            }
 
             var produto = _mapper.Map<Produto>(produtoDto);
 
-            _uow.ProdutoRepository.Update(produto);
-            _uow.Commit();
+            _uof.ProdutoRepository.Update(produto);
+
+            await _uof.Commit();
 
             return Ok();
         }
 
-        [HttpDelete("{id:int}")]
-        public ActionResult<ProdutoDTO> Delete(int id)
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<ProdutoDTO>> Delete(int id)
         {
-            var produto = _uow.ProdutoRepository.GetById(p => p.ProdutoId == id);
-            // var produto = _uow.Produtos.Find(id);
+            var produto = await _uof.ProdutoRepository.GetById(p => p.ProdutoId == id);
 
-            if (produto is null)
-                return NotFound("Produto não encontrado");
+            if (produto == null)
+            {
+                return NotFound();
+            }
 
-            _uow.ProdutoRepository.Delete(produto);
-            _uow.Commit();
+            _uof.ProdutoRepository.Delete(produto);
+            await _uof.Commit();
 
-            var produtoDTO = _mapper.Map<ProdutoDTO>(produto);
+            var produtoDto = _mapper.Map<ProdutoDTO>(produto);
 
-            return produtoDTO;
+            return produtoDto;
         }
     }
 }
